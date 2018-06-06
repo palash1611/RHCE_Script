@@ -105,6 +105,44 @@ def check_script():
         print("Output is not correct | check possible combinations	[ Mistake ]")
 
 
+def ssh():
+    print()
+    print()
+    print("Checking Firewall Rich Rule..........".center(1000))
+    print()
+    print()
+    accept = subprocess.run("firewall-cmd --list-all | grep \'\"ssh\" accept\'",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    accept_err = accept.stderr.decode()
+    accept_op = accept.stdout.decode()
+
+    reject = subprocess.run("firewall-cmd --list-all | grep \'\"ssh\" reject\'",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    reject_err = reject.stderr.decode()
+    reject_op = reject.stdout.decode()
+
+
+    if accept_op != '':
+        if reject_op != '':
+            accept = accept.stdout.decode().split('\n')[0].split('\t')[1]
+            reject = reject.stdout.decode().split('\n')[0].split('\t')[1]
+            if accept == 'rule family="ipv4" source address="10.1.1.1" service name="ssh" accept' :
+                if reject == 'rule family="ipv4" source address="10.1.1.5" service name="ssh" reject' :
+                    print("Rich Rules are correctly set	[ OK ]")
+                else :
+                    print("host 10.1.1.5 can SSH in your system [ Mistake ]")
+                    return
+            else:
+                print("host 10.1.1.1 can not SSH in your system [ Mistake ]")
+                return
+        else :
+            print("Rich Rules are not correct [ Mistake ]")
+            return
+    else :
+        print("Rich Rules are not correct [ Mistake ]")
+        return
+
+
+
 checkEnvironment()
 check_selinux()
 check_script()
+ssh()
