@@ -108,7 +108,7 @@ def check_script():
 def ssh():
     print()
     print()
-    print("Checking Firewall Rich Rule..........".center(1000))
+    print("Checking Firewall Rich Rule for SSH..........".center(1000))
     print()
     print()
     accept = subprocess.run("firewall-cmd --list-all | grep \'\"ssh\" accept\'",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -126,7 +126,7 @@ def ssh():
             reject = reject.stdout.decode().split('\n')[0].split('\t')[1]
             if accept == 'rule family="ipv4" source address="10.1.1.1" service name="ssh" accept' :
                 if reject == 'rule family="ipv4" source address="10.1.1.5" service name="ssh" reject' :
-                    print("Rich Rules are correctly set	[ OK ]")
+                    print("Rich Rules for SSH are correctly set	[ OK ]")
                 else :
                     print("host 10.1.1.5 can SSH in your system [ Mistake ]")
                     return
@@ -134,10 +134,31 @@ def ssh():
                 print("host 10.1.1.1 can not SSH in your system [ Mistake ]")
                 return
         else :
-            print("Rich Rules are not correct [ Mistake ]")
+            print("Rich Rules for SSH are not correct [ Mistake ]")
             return
     else :
-        print("Rich Rules are not correct [ Mistake ]")
+        print("Rich Rules for SSH are not correct [ Mistake ]")
+        return
+
+def port_fwd():
+    print()
+    print()
+    print("Checking Firewall Rich Rule for Port Forwarding..........".center(1000))
+    print()
+    print()
+
+    rule = subprocess.run("firewall-cmd --list-all | grep \'forward-port port=\"5423\"\'",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    rule_op = rule.stdout.decode()
+
+    if rule_op != '' :
+        rule = rule.stdout.decode().split('\n')[0].split('\t')[1]
+        if rule == 'rule family="ipv4" source address="172.25.1.0/24" forward-port port="5423" protocol="tcp" to-port="80"' :
+            print ("Rich Rules for Port Forwarding are correctly set	[ OK ]")
+        else :
+            print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]")
+            return
+    else:
+        print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]")
         return
 
 
@@ -146,3 +167,4 @@ checkEnvironment()
 check_selinux()
 check_script()
 ssh()
+port_fwd()
