@@ -82,13 +82,13 @@ def check_script():
         stat = subprocess.run(script, shell=True, stderr=subprocess.PIPE, stdout=open('/dev/null','w'))
         stat = stat.stderr.decode().split('\n')[0]
         if stat == '/bin/sh: /root/bin/script.sh: Permission denied':
-            print("Unable to execute script | check permissions		[ Mistake ]")
+            print("Unable to execute script | check permissions		[ Mistake ]\n")
             return
         else:
             print("Permissions are correct....Checking Script content")
             print()
     else:
-        print("File not found	[ Mistake ]")
+        print("File not found	[ Mistake ]\n")
         return
     check1 = subprocess.run(script + ' ' + arg1, shell=True,stdout=subprocess.PIPE, stderr=open('/dev/null','w'))
     check1 = check1.stdout.decode().split('\n')[0]
@@ -100,9 +100,9 @@ def check_script():
     check4 = check4.stderr.decode().split('\n')[0]
 
     if ((check1 == 'bar') and (check2 == 'redhat') ) and ( (check3 and check4) == '/bin/bash script.sh redhat|bar' ):
-        print("Script is correct	[ OK ]")
+        print("Script is correct	[ OK ]\n")
     else :
-        print("Output is not correct | check possible combinations	[ Mistake ]")
+        print("Output is not correct | check possible combinations	[ Mistake ]\n")
 
 
 def ssh():
@@ -126,18 +126,18 @@ def ssh():
             reject = reject.stdout.decode().split('\n')[0].split('\t')[1]
             if accept == 'rule family="ipv4" source address="10.1.1.1" service name="ssh" accept' :
                 if reject == 'rule family="ipv4" source address="10.1.1.5" service name="ssh" reject' :
-                    print("Rich Rules for SSH are correctly set	[ OK ]")
+                    print("Rich Rules for SSH are correctly set	[ OK ]\n")
                 else :
-                    print("host 10.1.1.5 can SSH in your system [ Mistake ]")
+                    print("host 10.1.1.5 can SSH in your system [ Mistake ]\n")
                     return
             else:
-                print("host 10.1.1.1 can not SSH in your system [ Mistake ]")
+                print("host 10.1.1.1 can not SSH in your system [ Mistake ]\n")
                 return
         else :
-            print("Rich Rules for SSH are not correct [ Mistake ]")
+            print("Rich Rules for SSH are not correct [ Mistake ]\n")
             return
     else :
-        print("Rich Rules for SSH are not correct [ Mistake ]")
+        print("Rich Rules for SSH are not correct [ Mistake ]\n")
         return
 
 def port_fwd():
@@ -153,12 +153,12 @@ def port_fwd():
     if rule_op != '' :
         rule = rule.stdout.decode().split('\n')[0].split('\t')[1]
         if rule == 'rule family="ipv4" source address="172.25.1.0/24" forward-port port="5423" protocol="tcp" to-port="80"' :
-            print ("Rich Rules for Port Forwarding are correctly set	[ OK ]")
+            print ("Rich Rules for Port Forwarding are correctly set	[ OK ]\n")
         else :
-            print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]")
+            print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]\n")
             return
     else:
-        print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]")
+        print ("Rich Rules for Port Forwarding are not correct	[ Mistake ]\n")
         return
 
 
