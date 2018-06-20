@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#
 #!/bin/bash
 # Script to check sample RHCE Practice exam (EX200)
 # NOTE - This is not the official Red Hat Certified Engineer Exam (EX200) Script.
