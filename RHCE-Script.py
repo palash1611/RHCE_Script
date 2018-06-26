@@ -594,7 +594,7 @@ def check_nfs_server_config():
     else :
         print "Directory does not exist  ....Skiping checking client side config......  [ Mistake ]"
                             
-
+'''
 def check_nfs_client_config():
     print
     print
@@ -602,7 +602,7 @@ def check_nfs_client_config():
     dir1 = '/mnt/public'
     dir2 = '/mnt/protected'
 
-    
+  '''  
 
 
 
