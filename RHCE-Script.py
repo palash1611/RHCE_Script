@@ -138,6 +138,44 @@ def check_script():
 
 
 
+def check_link_aggregation():
+    print 
+    print
+    print "Checking Link Aggregation......".center(100)
+    print
+    print
+
+    command = "ifconfig team0| awk '{print $2;}' | grep 192 | head -n1 | cut -d : -f2" #Need to Change device
+    
+    ipaddr = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
+    ipaddr = ipaddr.communicate()[0].split("\n")[0]
+
+    if ipaddr== '':
+        print "team0 not found or not active    [ Mistake ]"
+        return
+
+    team_typ = subprocess.Popen("teamdctl team0 state | grep activebackup",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    team_typ1 = team_typ.communicate()[0]
+    if team_typ1 != '' :
+        e1 = subprocess.Popen("teamdctl team0 state | grep eno1 | head -n1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        e1_op = e1.communicate()[0]
+        e2 = subprocess.Popen("teamdctl team0 state | grep eno1 | head -n1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        e2_op = e2.communicate()[0]
+        if e1_op != '' and e2_op != '':
+            ipaddr = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
+            ipaddr = ipaddr.communicate()[0].split("\n")[0]
+            if ipaddr == '192.168.0.105' :
+                print "Link Aggregation Configured correctly    [ OK ]"
+            else :
+                print "Ip not configured correctly   [ Mistake ]"
+        else :
+            print "Slaves not configured correctly    [ OK ]"
+    else :
+        print "Team type is not ActiveBackup    [ Mistake ]"
+
+
+
+
 def ssh():
     print
     print
@@ -413,45 +451,164 @@ def check_virtual_hosting():
         print "Directory does not exist   [ Mistake ]"
 
 
-
-
-
-
-
-def check_link_aggregation():
-    print 
+def check_apache_secret():
     print
-    print "Checking Link Aggregation......".center(100)
+    print
+    print "Checking Apache Secure Directory question......".center(100)
     print
     print
 
-    command = "ifconfig team0| awk '{print $2;}' | grep 192 | head -n1 | cut -d : -f2" #Need to Change device
-    
-    ipaddr = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
-    ipaddr = ipaddr.communicate()[0].split("\n")[0]
+    os.system("ifconfig eth0:0 192.168.0.1")
+    dir = '/var/www/html/secret'
+    check1 = 'http://server%d.example.com/secret/index.html'%host_no
+    check2 = 'http://%s/secret/index.html'%ipaddr
+    original_content = 'ftp://172.25.254.100/updates/host.html'
+    if os.path.isdir(dir):
+        if check_service('httpd'):
+            try :
+                original_content = urllib2.urlopen(original)
+                original_content = original_content.read()
+                content1 = urllib2.urlopen(check1)
+                content1 = content1.read()
+                content2 = urllib2.urlopen(check2)
+                content2 = content2.read()
 
-    if ipaddr== '':
-        print "team0 not found or not active    [ Mistake ]"
+                if content1 == original_content and content2 == original_content:
+                    os.system("ifconfig eth0:0 192.168.0.1")
+                    outside_url = 'http://192.168.0.1/secret/index.html'
+
+                    try :
+                        urllib2.urlopen(outside_url)
+                        print "Outer network can access secred directory  [ Mistake ]" 
+                        os.system("ifconfig eth0:0 down")
+                        return
+                    except urllib2.HTTPError :
+                        print "Secret is only accessible from System1  [ OK ]"
+                else :
+                    print "Content of website is not according to question   [ Mistake ]"
+            except urllib2.HTTPError :
+                print "Secret directory is not accessible from your System1    [ Mistake ]"
+        else :
+            print "Check service status   [ Mistake ]"
+    else :
+        print "Directory does not exist   [ Mistake ]"
+
+
+
+def check_apache_wsgi():
+    print
+    print
+    print "Checking Apache WSGI Script Question....".center(100)
+    print
+    print
+
+    script_file = '/var/www/cgi-bin/webapp.wsgi'
+    url = 'http://webapp%d.example.com:8999'%host_no
+
+    if os.path.isfile(script_file):
+        print "webapp.wsgi exist...Checking other specifications.....".center(100)
+    else :
+        print"webapp.wsgi does not exist in /var/www/cgi-bin/   [ Mistake ]"
         return
 
-    team_typ = subprocess.Popen("teamdctl team0 state | grep activebackup",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    team_typ1 = team_typ.communicate()[0]
-    if team_typ1 != '' :
-        e1 = subprocess.Popen("teamdctl team0 state | grep eno1 | head -n1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        e1_op = e1.communicate()[0]
-        e2 = subprocess.Popen("teamdctl team0 state | grep eno1 | head -n1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        e2_op = e2.communicate()[0]
-        if e1_op != '' and e2_op != '':
-            ipaddr = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
-            ipaddr = ipaddr.communicate()[0].split("\n")[0]
-            if ipaddr == '192.168.0.105' :
-                print "Link Aggregation Configured correctly    [ OK ]"
-            else :
-                print "Ip not configured correctly   [ Mistake ]"
+    lable = subprocess.Popen("semanage port -l | grep 8999",shell=True,stdout=subprocess.PIPE)
+    lable_op = lable.communicate()[0]
+
+    lable1 = re.search('http_port_t',lable_op)
+    if lable != None:
+        if check_service('httpd'):
+            try :
+                content1 = urllib2.urlopen(url)
+                content1 = content1.read()
+                content = re.search('#######',content)
+                if content != None:
+                    print "Website working correctly    [ OK ]"
+                else :
+                    print "Website content not correct   [ Mistake ]"
+            except urllib2.HTTPError :
+                print "Website is not working properly    [ Mistake ]"
         else :
-            print "Slaves not configured correctly    [ OK ]"
+            print "Check service status   [ Mistake ]"
     else :
-        print "Team type is not ActiveBackup    [ Mistake ]"
+        print "Semanage context of port 8999 is not correct    [ Mistake ]"
+
+
+
+def check_nfs_server_config():
+    print
+    print
+    print "Checking NFS Server side Configuration......".center(100)
+    print
+    print
+    dir1 = '/public'
+    dir2 = '/protected'
+    config_file = '/etc/exports'
+    nfs_version_file = '/etc/sysconfig/nfs'
+
+    key_file = '/etc/krb5.keytab'
+
+    nfs_file_content = subprocess.Popen("cat /etc/exports",shell=True,stdout=subprocess.PIPE)
+    nfs_file_content_op = nfs_file_content.communicate()[0]
+
+    public = re.search('/public\s+ro',nfs_file_content_op)
+    protected = re.search('/protected\s+rw',nfs_file_content_op)
+    protected_sec = re.search('/protected\s+krb5p',nfs_file_content_op)
+    nfs_vers = subprocess.Popen('cat /etc/sysconfig/nfs | grep NFSDARG',shell=True,stdout=subprocess.PIPE)
+    nfs_vers_op = nfs_vers.communicate()[0]
+    version = re.search('4.2',nfs_vers_op)
+
+    if os.path.isdir(dir1) and os.path.isdir(dir2) :
+        if check_service('nfs_secure_server') and check_service('nfe_server') :
+            context1 = subprocess.Popen("ls -ldZ /public | cut -d ':' -f3", shell=True, stdout=subprocess.PIPE)
+            context1 = context1.communicate()[0].split('\n')[0]
+            context2 = subprocess.Popen("ls -ldZ /protected | cut -d ':' -f3", shell=True, stdout=subprocess.PIPE)
+            context2 = context2.communicate()[0].split('\n')[0]
+            if context1 == 'nfs_t' and context2 == 'nfs_t':
+                if public != None :
+                    if protected != None :
+                        if protected_sec != None :
+                            if version != None :
+                                Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                                Firewall_op = Firewall.communicate()[0]
+                                Firewall_op = re.search('nfs',Firewall_op)
+                                if Firewall_op!= None:
+                                    print"NFS Server Side Configuration is correct    [ OK ]"
+                                    print
+                                    print
+                                    print "Checking NFS client side Configuration........."
+                                    check_nfs_client_config()
+                                else :
+                                    print"Server Side Configuration not correct (check Firewall)....Skiping checking client side config......   [ Mistake ] "
+                            else :
+                                print "NFS versionnot specified in /etc//sysconfig/nfs ....Skiping checking client side config......    [ Mistake ]"
+                        else :
+                            print "check kerberos config entry for protected share in /etc/exports   ....Skiping checking client side config......   [ Mistake ]"
+                    else :
+                        print "Check permissions of protected share in /etc/exports ....Skiping checking client side config......   [ Mistake ]"
+                else :
+                    print "Check permissions of public share in /etc/exports  ....Skiping checking client side config......   [ Mistake ]"
+            else :
+                print "Context of directories not correct  ....Skiping checking client side config......  [ Mistake ]"
+        else :
+            print "Check service status ....Skiping checking client side config......   [ Mistake ]"
+    else :
+        print "Directory does not exist  ....Skiping checking client side config......  [ Mistake ]"
+                            
+
+def check_nfs_client_config():
+    print
+    print
+    
+    dir1 = '/mnt/public'
+    dir2 = '/mnt/protected'
+
+    
+
+
+
+
+
+
 
 
 
