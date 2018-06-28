@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-#!/bin/bash
-# Script to check sample RHCE Practice exam (EX200)
-# NOTE - This is not the official Red Hat Certified Engineer Exam (EX200) Script.
-# This script is written to improve students' effeciency in the sample RHCE practice exam by
-# Institute of Technical Education, Bhopal (M.P.)
-#
-#   Author      : Palash Chaturvedi
-#   Date        : 6/06/2018
+
 
 import os
 import re
@@ -290,7 +283,15 @@ def check_samba_public():
                             if browseable == None :
                                 valid_users = re.search('valid users\s+=\s+krishna',content1)
                                 if valid_users != None :
-                                    print "Samba Single User has been configured correctly   [ OK ]"
+
+                                    Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                                    Firewall_op = Firewall.communicate()[0]
+                                    Firewall_op = re.search('samba',Firewall_op)
+
+                                    if Firewall_op != None :
+                                        print "Samba Single User has been configured correctly   [ OK ]"
+                                    else :
+                                        print "Check Firewall entry   [ Mistake ]"
                                 else :
                                     print "User Krishna does not have required permissions   [ Mistake ]"
                             else :
@@ -359,7 +360,14 @@ def check_samba_multiuser() :
                                                     chihihora = subprocess.Popen("smbclient -N //%s/releases -U chihihora%%redhat -c \"mkdir file_temp2\"" % (ipaddr),shell=True,stdout=subprocess.PIPE,stderr=open('/dev/null','w'))
                                                     chihihora_op = chihihora.communicate()[0]
                                                     if chihihora_op == '' :
-                                                        print "Samba Multi User Configured correctly     [ OK ]"
+                                                        Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                                                        Firewall_op = Firewall.communicate()[0]
+                                                        Firewall_op = re.search('samba',Firewall_op)
+
+                                                        if Firewall_op != None :
+                                                            print "Samba Multi User Configured correctly     [ OK ]"
+                                                        else :
+                                                            print "Check Firewall entry   [ Mistake ]"
                                                     else :
                                                         print "User chihihora does not have write permissions or its password is incorrect   [ Mistake ]"
                                                 else :
@@ -410,7 +418,14 @@ def check_apache_1():
             content2 = content2.read()
 
             if content1 == original_content and content2 == original_content:
-                print "Website is working perfectly    [ OK ]"
+                Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                Firewall_op = Firewall.communicate()[0]
+                Firewall_op = re.search('http',Firewall_op)
+
+                if Firewall_op != None :
+                    print "Website is working perfectly    [ OK ]"
+                else :
+                    print "Check Firewall entry    [ Mistake ]"
             else :
                 print "Content of website is not according to question   [ Mistake ]"
         except urllib2.HTTPError :
@@ -440,7 +455,13 @@ def check_virtual_hosting():
                 content1 = content1.read()
 
                 if original_content == content1 :
-                    print "Website is working perfectly    [ OK ]"
+                    Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                    Firewall_op = Firewall.communicate()[0]
+                    Firewall_op = re.search('http',Firewall_op)
+                    if Firewall_op != None :
+                        print "Website is working perfectly    [ OK ]"
+                    else :
+                        print "Checl Fire entry   [ Mistake ]"
                 else :
                     print "Content of website is not according to question   [ Mistake ]"
             except urllib2.HTTPError :
@@ -477,13 +498,20 @@ def check_apache_secret():
                     os.system("ifconfig eth0:0 192.168.0.1")
                     outside_url = 'http://192.168.0.1/secret/index.html'
 
-                    try :
-                        urllib2.urlopen(outside_url)
-                        print "Outer network can access secred directory  [ Mistake ]" 
-                        os.system("ifconfig eth0:0 down")
-                        return
-                    except urllib2.HTTPError :
-                        print "Secret is only accessible from System1  [ OK ]"
+                    Firewall = subprocess.Popen('firewall-cmd --list-all',shell=True,stdout=subprocess.PIPE)
+                    Firewall_op = Firewall.communicate()[0]
+                    Firewall_op = re.search('http',Firewall_op)
+
+                    if Firewall_op != None:
+                        try :
+                            urllib2.urlopen(outside_url)
+                            print "Outer network can access secred directory  [ Mistake ]" 
+                            os.system("ifconfig eth0:0 down")
+                            return
+                        except urllib2.HTTPError :
+                            print "Secret is only accessible from System1  [ OK ]"
+                    else :
+                        print "Check Filewall entry  [ Mistake ]"
                 else :
                     print "Content of website is not according to question   [ Mistake ]"
             except urllib2.HTTPError :
@@ -602,11 +630,97 @@ def check_nfs_client_config():
     dir1 = '/mnt/public'
     dir2 = '/mnt/protected'
 
+    subprocess.call('echo "test_NFS" >> /public/test_file',shell=True,stdout.subprocess.PIPE)
+
+    check_dir1 = subprocess.Popen("ssh root@desktop%d if [ -d /mnt/public ]; then echo \'true\' ; else echo \'false\';fi"%host_no,shell=True,stdout=subprocess.PIPE)
+    check_dir1_op = check_dir1.communicate()[0].split('\n')[0]
+    check_dir2 = subprocess.Popen("ssh root@desktop%d if [ -d /mnt/protected ]; then echo \'true\' ; else echo \'false\';fi"%host_no,shell=True,stdout=subprocess.PIPE)
+    check_dir2_op = check_dir2.communicate()[0].split('\n')[0]
+
+
+
+    fstab_content = subprocess.Popen("ssh root@desktop%d cat /etc/fstab"%host_no,shell=True,stdout=subprocess.PIPE)
+    fstab_content_op = fstab_content.communicate()[0]
+
+    public = re.search('/public\s+/mnt/public\s+_netdev',fstab_content_op)
+    public_perm = re.search('/public\s+/mnt/public\s+ro',fstab_content_op)
+    protected = re.search('/protected\s+/mnt/protected\s+_netdev',fstab_content_op)
+    protected_sec = re.search('/protected\s+/mnt/protected\s+krb5p',fstab_content_op)
+    protected_perm = re.search('/protected\s+/mnt/protected\s+rw',fstab_content_op)
+    nfs_vers = re.search('/protected\s+/mnt/protected\s+v4.2',fstab_content_op)
+
+    public_test = subprocess.Popen('ssh root@desktop%d cat /mnt/public/test_file'%host_no,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    public_test_content = public_test.communicate()[0]
+    public_test_op = re.search('test_NFS',public_test_content)
+
+    protected_test = subprocess.Popen('ssh root@desktop%d touch /mnt/protected/test_file_protected'%host_no,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    protected_test_op = protected_test.communicate()[0] #check output
+
+    if check_dir1_op == 'true' and check_dir2_op == 'true':
+        if check_service('nfs-secure'):
+            if public != None:
+                if public_perm != None:
+                    if protected != None:
+                        if protected_sec != None:
+                            if protected_perm != None:
+                                if nfs_vers != None :
+                                    if public_test_op != None:
+                                        if protected_test_op == '###################################################' :
+                                            print "NFS client configured correctly"
+                                            print
+                                            print "NFS Server configured correctly    [ OK ]"
+                                        else :
+                                            print "You do not have write permissions on /mnt/protected on client machine   [ Mistake ]"
+                                    else :
+                                        print "You do not have read permissions on /mnt/public on client machine   [ Mistake ]"
+                                else :
+                                    print "Check NFS version entry in /etc/fstab file for protected share on client machine   [ Mistake ]"
+                            else :
+                                print "Check permissions entry in /etc/fstab file for protected share on client machine   [ Mistake ]"
+                        else :
+                            print "Check Kerberos entry in /etc/fstab file for protected share on client machine   [ Mistake ]"
+                    else :
+                        print "Check protected share entry in /etc/fstab on client machine   [ Mistake ]"
+                else :
+                    print "Check permissions entry in /etc/fstab file for protected share on client machine   [ Mistake ]"
+            else :
+                print "Check public share entry in /etc/fstab on client machine   [ Mistake ]"
+        else :
+            print "Check service status    [ Mistake ]"
+    else :
+        print "Directory does not exist on client machine   [ Mistake ]"
+
+            
+
+
+'''
+
     
 
+def check_iscsi():
+    print
+    print
+    print "Checking ISCSI......".center(100)
+    print
+    print
+
+    if check_service('target'):
+        iscsid = subprocess.Popen('ssh root@desktop%d systemctl status iscsid | grep active',shell=True,stdout=subprocess.PIPE)
+        iscsid_op = iscsid.communicate()[0]
+        iscsid_status = re.search('Active: active',iscsid_op)
+        if iscsid_status != None:
+            iscsiadm = subprocess.Popen('ssh root@desktop%d iscsiadm -m discovery -t st -p %s'%host_no,ipaddr,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            iscsiadm_op = iscsiadm.communicate()[0]
+            server_iqn = re.search('iqn.2015-01.com.example:system1',iscsid_op)
+            if server_iqn != None :
+                client_iqn = subprocess.Popen('ssh root@desktop%d cat /etc/iscsi/initiatorname.iscsi',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                client_iqn = client_iqn.communicate()[0]
+                client_iqn_op = re.search('iqn.2015-01.com.example:system2',client_iqn)
+                if client_iqn_op != None :
 
 
 
+'''
 
 
 
