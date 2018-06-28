@@ -649,11 +649,11 @@ def check_nfs_client_config():
     protected_perm = re.search('/protected\s+/mnt/protected\s+rw',fstab_content_op)
     nfs_vers = re.search('/protected\s+/mnt/protected\s+v4.2',fstab_content_op)
 
-    public_test = subprocess.Popen('ssh root@desktop%d cat /mnt/public/test_file'%host_no,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    public_test = subprocess.Popen('ssh root@desktop%d cat /mnt/public/test_file',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     public_test_content = public_test.communicate()[0]
     public_test_op = re.search('test_NFS',public_test_content)
 
-    protected_test = subprocess.Popen('ssh root@desktop%d touch /mnt/protected/test_file_protected'%host_no,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    protected_test = subprocess.Popen('ssh root@desktop%d touch /mnt/protected/test_file_protected',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     protected_test_op = protected_test.communicate()[0] #check output
 
     if check_dir1_op == 'true' and check_dir2_op == 'true':
@@ -665,7 +665,7 @@ def check_nfs_client_config():
                             if protected_perm != None:
                                 if nfs_vers != None :
                                     if public_test_op != None:
-                                        if protected_test_op == '###################################################' :
+                                        if protected_test_op == '##########' :
                                             print "NFS client configured correctly"
                                             print
                                             print "NFS Server configured correctly    [ OK ]"
@@ -693,8 +693,8 @@ def check_nfs_client_config():
             
 
 
-'''
 
+'''
     
 
 def check_iscsi():
@@ -716,11 +716,17 @@ def check_iscsi():
                 client_iqn = subprocess.Popen('ssh root@desktop%d cat /etc/iscsi/initiatorname.iscsi',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                 client_iqn = client_iqn.communicate()[0]
                 client_iqn_op = re.search('iqn.2015-01.com.example:system2',client_iqn)
-                if client_iqn_op != None :
+                if client_iqn_op != None
 
 
 
 '''
+
+    
+
+
+
+
 
 
 
