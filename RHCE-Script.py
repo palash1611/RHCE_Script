@@ -4,9 +4,7 @@
 # This script is written to improve students' effeciency in the sample RHCE practice exam by
 # Institute of Technical Education, Bhopal (M.P.)
 #
-#   Author      : Palash Chaturvedi
-#   version     : Beta 1.0
-#   Date        : 6/06/2018
+#   Written by -  Palash Chaturvedi
 #
 # Please report the mistakes at palashchaturvedi1611@gmail.com
 
